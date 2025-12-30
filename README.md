@@ -34,31 +34,34 @@ Install-Package E5Embedding.Net
 using E5Embedding.Net;
 using Microsoft.Extensions.Logging;
 
-// Configure the embedding service
+string testText = "This is a test text for embedding generation using E5 model.";
+
 var config = new E5EmbeddingConfiguration
 {
-    OnnxModelPath = "path/to/model.onnx",
-    SentencePieceModelFile = "path/to/sentencepiece.bpe.model",
-    TokenizerConfigFile = "path/to/tokenizer_config.json",
-    TokenizerJsonFile = "path/to/tokenizer.json",
+    OnnxModelPath = "C:/WorkSpace/test/model.onnx",
+    SentencePieceModelFile = "C:/WorkSpace/test/sentencepiece.bpe.model",
+    TokenizerConfigFile = "C:/WorkSpace/test/tokenizer_config.json",
+    TokenizerJsonFile = "C:/WorkSpace/test/tokenizer.json",
     MaxSequenceLength = 512,
     Dimension = 1024,
     BatchSize = 16
 };
 
-// Create the service (optional logger)
-var logger = LoggerFactory.Create(builder => builder.AddConsole()).CreateLogger<OnnxEmbeddingService>();
-var embeddingService = new OnnxEmbeddingService(config, logger);
+// Logger is optional and can be null
+// If you don't need logging, you can pass null: new OnnxEmbeddingService(config, null)
+var loggerFactory = LoggerFactory.Create(builder => builder.AddConsole());
+var logger = loggerFactory.CreateLogger<OnnxEmbeddingService>();
 
-// Generate embedding for a single text
-var embedding = await embeddingService.EmbedAsync("Your text here");
+using var embeddingService = new OnnxEmbeddingService(config, logger);
+
+var embedding = await embeddingService.EmbedAsync(testText);
+
+Console.WriteLine($"Embedding dimension: {embedding.Length}");
+Console.WriteLine($"[{string.Join(", ", embedding.Select(v => v.ToString("F6")))}]");
 
 // Generate embeddings for multiple texts
 var texts = new[] { "Text 1", "Text 2", "Text 3" };
 var embeddings = await embeddingService.EmbedBatchAsync(texts);
-
-// Don't forget to dispose
-embeddingService.Dispose();
 ```
 
 ### Dependency Injection
@@ -166,6 +169,19 @@ You need the following files from your E5 model:
 2. **sentencepiece.bpe.model** - SentencePiece tokenizer model (for SentencePieceTokenizer)
 3. **tokenizer_config.json** - Tokenizer configuration
 4. **tokenizer.json** - Tokenizer vocabulary and metadata
+
+### Download Model Files
+
+You can download the ONNX model files from Hugging Face:
+
+- **Download URL**: [https://huggingface.co/intfloat/multilingual-e5-large/tree/main/onnx](https://huggingface.co/intfloat/multilingual-e5-large/tree/main/onnx)
+
+The repository contains various ONNX model formats:
+- `model.onnx` - Standard ONNX model
+- `model.onnx_data` - Model weights data
+- `model_O4.onnx` - Optimized ONNX model (O4)
+- `model_qint8_avx512_vnni.onnx` - Quantized model for AVX512 VNNI
+- Tokenizer files (`sentencepiece.bpe.model`, `tokenizer_config.json`, `tokenizer.json`)
 
 ## Performance Tips
 
