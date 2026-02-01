@@ -9,7 +9,7 @@
 		<NoWarn>$(NoWarn);1591</NoWarn>
 
 		<PackageId>E5Embedding.Net</PackageId>
-		<Version>1.0.1</Version>
+		<Version>1.0.2</Version>
 		<Authors>Mohammad Saeed Arabian</Authors>
 		<Product>E5 Embedding for .NET</Product>
 		<Description>A high-performance .NET library for generating text embeddings using E5 models with ONNX Runtime. Supports both SentencePiece and BERT tokenizers with GPU acceleration.</Description>
