@@ -1,3 +1,5 @@
+![E5Embedding Logo](E5Embedding.png)
+
 # E5Embedding.Net
 
 A high-performance .NET library for generating text embeddings using E5 models with ONNX Runtime. This library provides GPU acceleration support (CUDA/DirectML) with automatic CPU fallback, making it ideal for production environments.
