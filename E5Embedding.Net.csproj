@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
 	<PropertyGroup>
-		<TargetFramework>net10.0</TargetFramework>
+		<TargetFrameworks>net8.0;net9.0;net10.0</TargetFrameworks>
 		<ImplicitUsings>enable</ImplicitUsings>
 		<Nullable>enable</Nullable>
 		<LangVersion>latest</LangVersion>
@@ -9,7 +9,7 @@
 		<NoWarn>$(NoWarn);1591</NoWarn>
 
 		<PackageId>E5Embedding.Net</PackageId>
-		<Version>1.0.3</Version>
+		<Version>2.0.0</Version>
 		<Authors>Mohammad Saeed Arabian</Authors>
 		<Product>E5 Embedding for .NET</Product>
 		<Description>A high-performance .NET library for generating text embeddings using E5 models with ONNX Runtime. Supports both SentencePiece and BERT tokenizers with GPU acceleration.</Description>
