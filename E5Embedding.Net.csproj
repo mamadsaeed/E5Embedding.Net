@@ -12,17 +12,34 @@
 		<Version>3.0.0</Version>
 		<Authors>Mohammad Saeed Arabian</Authors>
 		<Product>E5 Embedding for .NET</Product>
-		<Description>A high-performance .NET library for generating text embeddings using E5 models with ONNX Runtime. Supports both SentencePiece and BERT tokenizers with GPU acceleration.</Description>
+
+		<Description>
+			A high-performance .NET library for generating text embeddings using E5 models
+			with ONNX Runtime. Supports both SentencePiece and BERT tokenizers with GPU acceleration.
+		</Description>
+
 		<PackageTags>embedding;e5;onnx;nlp;machine-learning;ai;text-embedding;vector</PackageTags>
+
 		<PackageLicenseExpression>MIT</PackageLicenseExpression>
+
 		<PackageProjectUrl>https://github.com/mamadsaeed/E5Embedding.Net</PackageProjectUrl>
 		<RepositoryUrl>https://github.com/mamadsaeed/E5Embedding.Net</RepositoryUrl>
 		<RepositoryType>git</RepositoryType>
+
 		<PackageReadmeFile>README.md</PackageReadmeFile>
 		<PackageIcon>E5Embedding.png</PackageIcon>
 
+		<PackageReleaseNotes>
+			Initial stable release of E5Embedding.Net with E5 ONNX embedding support,
+			GPU acceleration and tokenizer support.
+		</PackageReleaseNotes>
+
 		<PackageRequireLicenseAcceptance>false</PackageRequireLicenseAcceptance>
+		<ContinuousIntegrationBuild>true</ContinuousIntegrationBuild>
+		<EmbedUntrackedSources>true</EmbedUntrackedSources>
+		<PublishRepositoryUrl>true</PublishRepositoryUrl>
 	</PropertyGroup>
+
 
 	<ItemGroup>
 		<PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="10.0.8" />
@@ -30,9 +47,11 @@
 		<PackageReference Include="Microsoft.ML.Tokenizers" Version="2.0.0" />
 	</ItemGroup>
 
+
 	<ItemGroup>
 		<None Include="README.md" Pack="true" PackagePath="\" />
 		<None Include="E5Embedding.png" Pack="true" PackagePath="\" />
+		<None Include="architect.png" Pack="true" PackagePath="\" />
 	</ItemGroup>
 
 </Project>
