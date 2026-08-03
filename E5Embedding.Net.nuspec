@@ -1,0 +1,36 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<package xmlns="http://schemas.microsoft.com/packaging/2013/05/nuspec.xsd">
+  <metadata>
+    <id>E5Embedding.Net</id>
+    <version>3.0.0</version>
+    <authors>Mohammad Saeed Arabian</authors>
+    <license type="expression">MIT</license>
+    <licenseUrl>https://licenses.nuget.org/MIT</licenseUrl>
+    <icon>E5Embedding.png</icon>
+    <readme>README.md</readme>
+    <projectUrl>https://github.com/mamadsaeed/E5Embedding.Net</projectUrl>
+    <description>A high-performance .NET library for generating text embeddings using E5 models
+			with ONNX Runtime. Supports both SentencePiece and BERT tokenizers with GPU acceleration.</description>
+    <releaseNotes>Initial stable release of E5Embedding.Net with E5 ONNX embedding support,
+			GPU acceleration and tokenizer support.</releaseNotes>
+    <tags>embedding e5 onnx nlp machine-learning ai text-embedding vector</tags>
+    <repository type="git" url="https://github.com/mamadsaeed/E5Embedding.Net" branch="refs/heads/main" commit="30ab0704153cc182b15d7195f7351052a31dcd6b" />
+    <dependencies>
+      <group targetFramework="net10.0">
+        <dependency id="Microsoft.Extensions.Logging.Abstractions" version="10.0.8" exclude="Build,Analyzers" />
+        <dependency id="Microsoft.ML.OnnxRuntime.Gpu" version="1.26.0" exclude="Build,Analyzers" />
+        <dependency id="Microsoft.ML.Tokenizers" version="2.0.0" exclude="Build,Analyzers" />
+      </group>
+      <group targetFramework="net8.0">
+        <dependency id="Microsoft.Extensions.Logging.Abstractions" version="10.0.8" exclude="Build,Analyzers" />
+        <dependency id="Microsoft.ML.OnnxRuntime.Gpu" version="1.26.0" exclude="Build,Analyzers" />
+        <dependency id="Microsoft.ML.Tokenizers" version="2.0.0" exclude="Build,Analyzers" />
+      </group>
+      <group targetFramework="net9.0">
+        <dependency id="Microsoft.Extensions.Logging.Abstractions" version="10.0.8" exclude="Build,Analyzers" />
+        <dependency id="Microsoft.ML.OnnxRuntime.Gpu" version="1.26.0" exclude="Build,Analyzers" />
+        <dependency id="Microsoft.ML.Tokenizers" version="2.0.0" exclude="Build,Analyzers" />
+      </group>
+    </dependencies>
+  </metadata>
+</package>

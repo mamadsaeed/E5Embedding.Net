@@ -1,5 +1,3 @@
-![E5Embedding Logo](E5Embedding.png)
-
 # E5Embedding.Net
 
 > High-performance .NET library for generating **text embeddings using E5 models** with **ONNX Runtime**, supporting **CUDA**, **DirectML**, and automatic **CPU fallback**.
@@ -64,8 +62,6 @@ Install-Package E5Embedding.Net
 ---
 
 ## Architecture
-
-![Architecture Diagram](architect.png)
 
 The processing flow of the pipeline:
 
