@@ -2,10 +2,12 @@ name: .NET CI and NuGet Publish
 
 on:
   push:
-    branches: ["main"]
+    branches:
+      - main
 
   pull_request:
-    branches: ["main"]
+    branches:
+      - main
 
 permissions:
   contents: read
@@ -66,9 +68,10 @@ jobs:
         uses: NuGet/login@v1
         with:
           user: mamadsaeed
+          token-service-url: https://api.nuget.org/v3/index.json
 
       - name: Push package to NuGet.org
         run: |
           dotnet nuget push "./nupkg/*.nupkg" \
-            --source "https://api.nuget.org/v3/index.json" \
+            --source "nuget.org" \
             --skip-duplicate
