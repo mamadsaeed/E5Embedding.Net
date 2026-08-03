@@ -20,18 +20,31 @@ public sealed class OnnxEmbeddingService : IEmbeddingService, IDisposable
     private const string LastHiddenStateOutputName = "last_hidden_state";
     private const int DefaultDeviceId = 0;
 
+    private static readonly HashSet<int> AllowedDimensions = new() { 384, 768, 1024 };
+
     /// <summary>
     /// Initializes a new instance of the <see cref="OnnxEmbeddingService"/> class.
     /// </summary>
     /// <param name="configuration">The configuration for the embedding service.</param>
     /// <param name="logger">Optional logger for diagnostic information.</param>
     /// <exception cref="ArgumentNullException">Thrown when configuration is null.</exception>
+    /// <exception cref="ArgumentException">Thrown when model dimension is invalid.</exception>
     /// <exception cref="InvalidOperationException">Thrown when configuration is invalid or model dimensions don't match.</exception>
     /// <exception cref="FileNotFoundException">Thrown when model or tokenizer files are not found.</exception>
     public OnnxEmbeddingService(E5EmbeddingConfiguration configuration, ILogger<OnnxEmbeddingService>? logger = null)
     {
         _configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
         _logger = logger;
+
+        if (!AllowedDimensions.Contains(_configuration.Dimension))
+        {
+            var errorMessage = $"Invalid embedding dimension: {_configuration.Dimension}. " +
+                               $"Allowed values are 384 (for multilingual-e5-small), " +
+                               $"768 (for multilingual-e5-base), or 1024 (for multilingual-e5-large and multilingual-e5-large-instruct).";
+
+            _logger?.LogError(errorMessage);
+            throw new ArgumentException(errorMessage, nameof(configuration));
+        }
 
         if (string.IsNullOrWhiteSpace(_configuration.OnnxModelPath))
         {
@@ -47,10 +60,11 @@ public sealed class OnnxEmbeddingService : IEmbeddingService, IDisposable
         _session = sessionCreate.Session;
 
         _logger?.LogInformation(
-            "ONNX embedding session created. Provider={Provider}, UsedGpu={UsedGpu}, ModelPath={ModelPath}",
+            "ONNX embedding session created. Provider={Provider}, UsedGpu={UsedGpu}, ModelPath={ModelPath}, Dimension={Dimension}",
             sessionCreate.Provider,
             sessionCreate.UsedGpu,
-            _configuration.OnnxModelPath);
+            _configuration.OnnxModelPath,
+            _configuration.Dimension);
 
         if (sessionCreate.GpuFallbackToCpu && sessionCreate.GpuException is not null)
         {
@@ -69,12 +83,14 @@ public sealed class OnnxEmbeddingService : IEmbeddingService, IDisposable
         if (_session.OutputMetadata.TryGetValue(LastHiddenStateOutputName, out var outputMeta))
         {
             var dims = outputMeta.Dimensions;
-            if (dims is { Length: 3 } && dims[2] > 0 && _configuration.Dimension > 0 && dims[2] != _configuration.Dimension)
+            if (dims is { Length: 3 } && dims[2] > 0 && dims[2] != _configuration.Dimension)
             {
-                throw new InvalidOperationException(
-                    $"Embedding dimension mismatch. Configured Dimension={_configuration.Dimension}, " +
-                    $"but model output '{LastHiddenStateOutputName}' has hidden_size={dims[2]}. " +
-                    "Fix the Dimension configuration to match the model.");
+                var mismatchError = $"Embedding dimension mismatch. Configured Dimension={_configuration.Dimension}, " +
+                                    $"but model output '{LastHiddenStateOutputName}' has hidden_size={dims[2]}. " +
+                                    "Fix the Dimension configuration to match the model.";
+
+                _logger?.LogError(mismatchError);
+                throw new InvalidOperationException(mismatchError);
             }
         }
     }
@@ -176,7 +192,7 @@ public sealed class OnnxEmbeddingService : IEmbeddingService, IDisposable
         }
 
         var hiddenSize = embeddings.Dimensions[2];
-        if (_configuration.Dimension > 0 && _configuration.Dimension != hiddenSize)
+        if (_configuration.Dimension != hiddenSize)
         {
             throw new InvalidOperationException(
                 $"Embedding dimension mismatch at runtime. Configured Dimension={_configuration.Dimension}, " +
@@ -337,4 +353,3 @@ public sealed class OnnxEmbeddingService : IEmbeddingService, IDisposable
         }
     }
 }
-

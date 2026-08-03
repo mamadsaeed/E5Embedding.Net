@@ -2,89 +2,164 @@
 
 # E5Embedding.Net
 
-A high-performance .NET library for generating text embeddings using E5 models with ONNX Runtime. This library provides GPU acceleration support (CUDA/DirectML) with automatic CPU fallback, making it ideal for production environments.
+> High-performance .NET library for generating **text embeddings using E5 models** with **ONNX Runtime**, supporting **CUDA**, **DirectML**, and automatic **CPU fallback**.
+
+E5Embedding.Net provides a simple and production-ready API for integrating modern embedding models into .NET applications.
+
+Designed for:
+- Semantic Search
+- Retrieval Augmented Generation (RAG)
+- Vector Databases
+- Document Similarity
+- Recommendation Systems
+- AI-powered Search
+
+---
 
 ## Features
 
-- 🚀 **High Performance**: Optimized ONNX Runtime inference with GPU acceleration
-- 🎯 **E5 Model Support**: Built specifically for E5 embedding models
-- 🔧 **Flexible Tokenization**: Supports both SentencePiece and BERT-style tokenizers
-- 💻 **GPU Acceleration**: Automatic GPU detection with CUDA and DirectML support
-- 🔄 **Automatic Fallback**: Seamless fallback to CPU if GPU initialization fails
-- 📦 **Easy Integration**: Simple API for embedding single texts or batches
-- 🎨 **Production Ready**: Comprehensive error handling and logging support
+🚀 **High Performance**
+- Optimized ONNX Runtime inference
+- Efficient batch processing
+- Async embedding generation
+
+🎯 **E5 Model Support**
+- Built specifically for E5 embedding models
+- Supports retrieval-style embeddings (`query:` / `passage:`)
+
+💻 **GPU Acceleration**
+- NVIDIA CUDA support
+- Windows DirectML support
+- Automatic CPU fallback
+
+🔧 **Flexible Tokenization**
+- SentencePiece tokenizer support
+- BERT WordPiece tokenizer support
+
+📦 **Easy Integration**
+- Simple API
+- Dependency Injection support
+- Microsoft.Extensions.Logging integration
+
+🛡️ **Production Ready**
+- Resource management
+- Validation
+- Error handling
+- Logging support
+
+---
 
 ## Installation
 
-Install the package via NuGet:
-
+Install via .NET CLI:
 ```bash
 dotnet add package E5Embedding.Net
 ```
 
-Or via Package Manager:
-
+Or via Package Manager Console:
 ```powershell
 Install-Package E5Embedding.Net
 ```
 
-## Quick Start
+---
 
-### Basic Usage
+## Architecture
+
+![Architecture Diagram](architect.png)
+
+The processing flow of the pipeline:
+
+```
+Text Input
+    |
+    v
+Tokenizer
+    |
+    v
+Token IDs + Attention Mask
+    |
+    v
+ONNX Runtime
+    |
+    v
+Embedding Vector
+```
+
+---
+
+## Quick Start
 
 ```csharp
 using E5Embedding.Net;
-using Microsoft.Extensions.Logging;
-
-string testText = "This is a test text for embedding generation using E5 model.";
 
 var config = new E5EmbeddingConfiguration
 {
-    OnnxModelPath = "C:/WorkSpace/test/model.onnx",
-    SentencePieceModelFile = "C:/WorkSpace/test/sentencepiece.bpe.model",
-    TokenizerConfigFile = "C:/WorkSpace/test/tokenizer_config.json",
-    TokenizerJsonFile = "C:/WorkSpace/test/tokenizer.json",
+    OnnxModelPath = "./E5/model.onnx",
+    SentencePieceModelFile = "./E5/sentencepiece.bpe.model",
+    TokenizerConfigFile = "./E5/tokenizer_config.json",
+    TokenizerJsonFile = "./E5/tokenizer.json",
+
     MaxSequenceLength = 512,
     Dimension = 1024,
     BatchSize = 16
 };
 
-// Logger is optional and can be null
-// If you don't need logging, you can pass null: new OnnxEmbeddingService(config, null)
-var loggerFactory = LoggerFactory.Create(builder => builder.AddConsole());
-var logger = loggerFactory.CreateLogger<OnnxEmbeddingService>();
+using var embeddingService = new OnnxEmbeddingService(config);
 
-using var embeddingService = new OnnxEmbeddingService(config, logger);
+var embedding = await embeddingService.EmbedAsync("This is a sample text.");
 
-var embedding = await embeddingService.EmbedAsync(testText);
-
-Console.WriteLine($"Embedding dimension: {embedding.Length}");
-Console.WriteLine($"[{string.Join(", ", embedding.Select(v => v.ToString("F6")))}]");
-
-// Generate embeddings for multiple texts
-var texts = new[] { "Text 1", "Text 2", "Text 3" };
-var embeddings = await embeddingService.EmbedBatchAsync(texts);
+Console.WriteLine($"Embedding size: {embedding.Length}");
 ```
 
-### Dependency Injection
+### Batch Embeddings
+
+For multiple documents, use batch processing:
 
 ```csharp
-using E5Embedding.Net;
-using Microsoft.Extensions.DependencyInjection;
+var documents = new[]
+{
+    "Document one",
+    "Document two",
+    "Document three"
+};
 
-// In your Startup.cs or Program.cs
+var embeddings = await embeddingService.EmbedBatchAsync(documents);
+```
+> **Note:** Batch processing improves throughput by reducing inference overhead.
+
+---
+
+## Retrieval Example
+
+E5 models are optimized for retrieval scenarios using prefixes:
+- **Query:** `query: <your search query>`
+- **Passage:** `passage: <your document content>`
+
+```csharp
+var queryEmbedding = await service.EmbedAsync(
+    "query: What is machine learning?"
+);
+
+var passageEmbedding = await service.EmbedAsync(
+    "passage: Machine learning is a branch of AI..."
+);
+```
+
+---
+
+## Dependency Injection
+
+Example registration:
+
+```csharp
 services.AddSingleton<E5EmbeddingConfiguration>(sp =>
 {
-    var configuration = sp.GetRequiredService<IConfiguration>();
     return new E5EmbeddingConfiguration
     {
-        OnnxModelPath = configuration["E5:OnnxModelPath"],
-        SentencePieceModelFile = configuration["E5:SentencePieceModelFile"],
-        TokenizerConfigFile = configuration["E5:TokenizerConfigFile"],
-        TokenizerJsonFile = configuration["E5:TokenizerJsonFile"],
-        MaxSequenceLength = configuration.GetValue<int>("E5:MaxSequenceLength"),
-        Dimension = configuration.GetValue<int>("E5:Dimension"),
-        BatchSize = configuration.GetValue<int>("E5:BatchSize", 16)
+        OnnxModelPath = "./model.onnx",
+        MaxSequenceLength = 512,
+        Dimension = 1024,
+        BatchSize = 16
     };
 });
 
@@ -92,123 +167,156 @@ services.AddSingleton<IEmbeddingService>(sp =>
 {
     var config = sp.GetRequiredService<E5EmbeddingConfiguration>();
     var logger = sp.GetService<ILogger<OnnxEmbeddingService>>();
+
     return new OnnxEmbeddingService(config, logger);
 });
 ```
 
+---
+
 ## Configuration
 
-### E5EmbeddingConfiguration Properties
+### `E5EmbeddingConfiguration`
 
 | Property | Type | Description | Default |
-|----------|------|-------------|---------|
-| `OnnxModelPath` | `string` | Path to the ONNX model file | Required |
-| `SentencePieceModelFile` | `string` | Path to SentencePiece model file | `"sentencepiece.bpe.model"` |
-| `TokenizerConfigFile` | `string` | Path to tokenizer config JSON | `"tokenizer_config.json"` |
-| `TokenizerJsonFile` | `string` | Path to tokenizer JSON file | `"tokenizer.json"` |
-| `MaxSequenceLength` | `int` | Maximum sequence length for tokenization | Required |
-| `Dimension` | `int` | Expected embedding dimension | `1024` |
-| `BatchSize` | `int` | Batch size for processing multiple texts | `16` |
+| :--- | :--- | :--- | :--- |
+| `OnnxModelPath` | `string` | ONNX model location | *Required* |
+| `SentencePieceModelFile` | `string` | SentencePiece model file | `sentencepiece.bpe.model` |
+| `TokenizerConfigFile` | `string` | Tokenizer configuration | `tokenizer_config.json` |
+| `TokenizerJsonFile` | `string` | Tokenizer metadata | `tokenizer.json` |
+| `MaxSequenceLength` | `int` | Maximum tokens | *Required* |
+| `Dimension` | `int` | Embedding dimension | `1024` |
+| `BatchSize` | `int` | Batch processing size | `16` |
+
+---
 
 ## GPU Acceleration
 
-The library automatically detects and uses GPU acceleration when available:
+E5Embedding.Net automatically selects the best available execution provider in the following order:
+1. **CUDA**
+2. **DirectML**
+3. **CPU**
 
-- **CUDA**: Automatically used on systems with NVIDIA GPUs and CUDA support
-- **DirectML**: Used on Windows systems with compatible GPUs
-- **CPU Fallback**: Automatically falls back to CPU if GPU initialization fails
+No additional configuration is required. The selected provider is reported through logging.
 
-GPU usage is logged when the service is initialized. Check your logs to see which provider is being used.
+---
 
 ## Tokenizers
 
 ### SentencePieceTokenizer
-
-Used by default for E5 models. Supports BPE (Byte Pair Encoding) tokenization.
+Recommended for E5 models.
 
 ```csharp
-using E5Embedding.Net.Tokenization;
-
 var tokenizer = new SentencePieceTokenizer(
-    sentencePieceModelFile: "path/to/sentencepiece.bpe.model",
-    tokenizerConfigFile: "path/to/tokenizer_config.json",
-    tokenizerJsonFile: "path/to/tokenizer.json",
-    maxSequenceLength: 512
+    "sentencepiece.bpe.model",
+    "tokenizer_config.json",
+    "tokenizer.json",
+    512
 );
 
-var encoding = tokenizer.Encode("Your text here");
+var encoding = tokenizer.Encode("Hello world");
 ```
 
 ### BertTokenizer
-
-BERT-style WordPiece tokenizer for models that require it.
+Supports BERT-style WordPiece tokenization.
 
 ```csharp
-using E5Embedding.Net.Tokenization;
-
 var tokenizer = new BertTokenizer(
-    tokenizerConfigFile: "path/to/tokenizer_config.json",
-    tokenizerJsonFile: "path/to/tokenizer.json",
-    maxSequenceLength: 512
+    "tokenizer_config.json",
+    "tokenizer.json",
+    512
 );
 
-var encoding = tokenizer.Encode("Your text here");
-var pairEncoding = tokenizer.EncodePair("Query text", "Passage text");
+var result = tokenizer.Encode("Example text");
 ```
+
+---
+
+## Supported Models
+
+Currently tested with [intfloat/multilingual-e5-large](https://huggingface.co/intfloat/multilingual-e5-large/tree/main/onnx).
+
+Supported ONNX variants:
+- `model.onnx`
+- `model.onnx_data`
+- `model_O4.onnx`
+- `model_qint8_avx512_vnni.onnx`
+
+### Model Files
+Required files:
+- `model.onnx`
+- `model.onnx_data`
+- `sentencepiece.bpe.model`
+- `tokenizer.json`
+- `tokenizer_config.json`
+
+---
 
 ## Requirements
 
-- .NET 8.0 or later
-- ONNX Runtime (included via NuGet package)
-- E5 model files (ONNX format)
-- Tokenizer files (SentencePiece model, config, and JSON)
+- .NET 8.0+
+- ONNX Runtime
+- E5 ONNX model files & Tokenizer files
 
-## Model Files
+**Supported Platforms:**
+- Windows / Linux
+- GPU: NVIDIA CUDA / DirectML compatible GPUs
 
-You need the following files from your E5 model:
-
-1. **model.onnx** - The ONNX model file
-2. **sentencepiece.bpe.model** - SentencePiece tokenizer model (for SentencePieceTokenizer)
-3. **tokenizer_config.json** - Tokenizer configuration
-4. **tokenizer.json** - Tokenizer vocabulary and metadata
-
-### Download Model Files
-
-You can download the ONNX model files from Hugging Face:
-
-- **Download URL**: [https://huggingface.co/intfloat/multilingual-e5-large/tree/main/onnx](https://huggingface.co/intfloat/multilingual-e5-large/tree/main/onnx)
-
-The repository contains various ONNX model formats:
-- `model.onnx` - Standard ONNX model
-- `model.onnx_data` - Model weights data
-- `model_O4.onnx` - Optimized ONNX model (O4)
-- `model_qint8_avx512_vnni.onnx` - Quantized model for AVX512 VNNI
-- Tokenizer files (`sentencepiece.bpe.model`, `tokenizer_config.json`, `tokenizer.json`)
+---
 
 ## Performance Tips
 
-1. **Batch Processing**: Use `EmbedBatchAsync` for multiple texts to improve throughput
-2. **Batch Size**: Adjust `BatchSize` based on your memory and performance requirements
-3. **GPU**: Ensure GPU drivers are installed for best performance
-4. **Dispose**: Always dispose the service when done to free resources
+1. **Reuse the Service:**
+   Create one instance and reuse it as a singleton. The ONNX session is expensive to initialize.
+   ```csharp
+   services.AddSingleton<IEmbeddingService, OnnxEmbeddingService>();
+   ```
+2. **Use Batch Processing:**
+   Prefer `EmbedBatchAsync()` for multiple texts.
+3. **Dispose Resources:**
+   Always dispose of the service when finished:
+   ```csharp
+   using var service = new OnnxEmbeddingService(config);
+   ```
+
+---
 
 ## Error Handling
 
-The library provides comprehensive error handling:
+Common exceptions:
 
-- `ArgumentNullException`: When required parameters are null
-- `FileNotFoundException`: When model or tokenizer files are missing
-- `InvalidOperationException`: When configuration is invalid or dimensions don't match
-- `AggregateException`: When both GPU and CPU initialization fail
+| Exception | Description |
+| :--- | :--- |
+| `ArgumentNullException` | Missing required arguments |
+| `FileNotFoundException` | Model or tokenizer files missing |
+| `InvalidOperationException` | Invalid configuration |
+| `AggregateException` | GPU and CPU initialization failure |
 
-## License
+---
 
-MIT License - see LICENSE file for details
+## Roadmap
+
+- [ ] More E5 model variants
+- [ ] Native AOT support
+- [ ] Memory pooling optimization
+- [ ] Additional quantized models
+- [ ] Streaming embedding API
+- [ ] Built-in similarity utilities
+
+---
 
 ## Contributing
 
-Contributions are welcome! Please feel free to submit a Pull Request.
+Contributions are welcome! Feel free to open issues or submit pull requests.
+
+---
+
+## License
+
+MIT License. See [LICENSE](LICENSE) for details.
+
+---
 
 ## Support
 
-For issues, questions, or contributions, please visit the [GitHub repository](https://github.com/mamadsaeed/E5Embedding.Net).
+For issues, discussions, and contributions, visit the [GitHub Repository](https://github.com/mamadsaeed/E5Embedding.Net).
