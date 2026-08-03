@@ -1,22 +1,23 @@
-name: Publish NuGet Package
+name: .NET CI and NuGet Publish
 
 on:
-  workflow_dispatch:
-  release:
-    types:
-      - published
+  push:
+    branches: ["main"]
+
+  pull_request:
+    branches: ["main"]
 
 permissions:
   contents: read
   id-token: write
 
 jobs:
-  publish:
-    name: Build and Publish NuGet Package
+  build:
+    name: Build and Test
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout repository
+      - name: Checkout
         uses: actions/checkout@v4
 
       - name: Setup .NET
@@ -27,21 +28,43 @@ jobs:
             9.0.x
             10.0.x
 
-      - name: Restore dependencies
+      - name: Restore
         run: dotnet restore
 
       - name: Build
         run: dotnet build --configuration Release --no-restore
 
-      - name: Pack NuGet package
-        run: dotnet pack --configuration Release --no-build --output ./nupkg
+      - name: Test
+        run: dotnet test --configuration Release --no-build --verbosity normal
+
+
+  publish:
+    name: Publish NuGet Package
+    needs: build
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: |
+            8.0.x
+            9.0.x
+            10.0.x
+
+      - name: Pack NuGet
+        run: dotnet pack E5Embedding.Net.csproj -c Release -o ./nupkg
 
       - name: Login to NuGet.org
         uses: NuGet/login@v1
         with:
           nuget-server: https://api.nuget.org/v3/index.json
 
-      - name: Publish to NuGet.org
+      - name: Push to NuGet.org
         run: |
           dotnet nuget push "./nupkg/*.nupkg" \
             --source https://api.nuget.org/v3/index.json \
