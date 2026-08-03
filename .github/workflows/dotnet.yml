@@ -6,6 +6,10 @@ on:
   pull_request:
     branches: [ "main" ]
 
+permissions:
+  id-token: write
+  contents: read
+
 jobs:
   build:
 
@@ -30,3 +34,14 @@ jobs:
 
       - name: Test
         run: dotnet test --configuration Release --no-build --verbosity normal
+
+      - name: Pack NuGet package
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        run: dotnet pack --configuration Release --no-build --output ./nupkg
+
+      - name: Publish to NuGet (Trusted Publishing)
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        run: |
+          dotnet nuget push "./nupkg/*.nupkg" \
+            --source https://api.nuget.org/v3/index.json \
+            --skip-duplicate
